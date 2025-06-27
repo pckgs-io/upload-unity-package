@@ -25643,6 +25643,14 @@ module.exports = {
 
 /***/ }),
 
+/***/ 7011:
+/***/ ((module) => {
+
+module.exports = eval("require")("form-data-encoder");
+
+
+/***/ }),
+
 /***/ 2613:
 /***/ ((module) => {
 
@@ -28136,6 +28144,7 @@ const fs = __nccwpck_require__(9896);
 const path = __nccwpck_require__(6928);
 const https = __nccwpck_require__(5692);
 const { FormData, File } = __nccwpck_require__(4859);
+const { FormDataEncoder } = __nccwpck_require__(7011);
 
 async function getPackageJson(folder) {
     // Try to read from the given folder first (relative to repo root)
@@ -28169,8 +28178,7 @@ async function uploadArchive(file, accessToken, isPublic, metadata, archiveName)
     form.set('metadata', JSON.stringify(metadata));
     form.append('packageFile', new File([file], archiveName, { type: 'application/gzip' }));
 
-    const boundary = form.getBoundary();
-    const body = Buffer.concat([...form]);
+    const encoder = new FormDataEncoder(form);
 
     const options = {
         method: 'POST',
@@ -28178,8 +28186,7 @@ async function uploadArchive(file, accessToken, isPublic, metadata, archiveName)
         path: '/packages',
         headers: {
             'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': `multipart/form-data; boundary=${boundary}`,
-            'Content-Length': body.length
+            ...encoder.headers
         }
     };
 
@@ -28196,8 +28203,11 @@ async function uploadArchive(file, accessToken, isPublic, metadata, archiveName)
             });
         });
         req.on('error', reject);
-        req.write(body);
-        req.end();
+        // encoder is an async iterable (stream)
+        const stream = encoder.encode();
+        stream.on('data', chunk => req.write(chunk));
+        stream.on('end', () => req.end());
+        stream.on('error', reject);
     });
 }
 

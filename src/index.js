@@ -4,6 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const https = require('https');
 const { FormData, File } = require('formdata-node');
+const { FormDataEncoder } = require('form-data-encoder');
 
 async function getPackageJson(folder) {
     // Try to read from the given folder first (relative to repo root)
@@ -37,8 +38,7 @@ async function uploadArchive(file, accessToken, isPublic, metadata, archiveName)
     form.set('metadata', JSON.stringify(metadata));
     form.append('packageFile', new File([file], archiveName, { type: 'application/gzip' }));
 
-    const boundary = form.getBoundary();
-    const body = Buffer.concat([...form]);
+    const encoder = new FormDataEncoder(form);
 
     const options = {
         method: 'POST',
@@ -46,8 +46,7 @@ async function uploadArchive(file, accessToken, isPublic, metadata, archiveName)
         path: '/packages',
         headers: {
             'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': `multipart/form-data; boundary=${boundary}`,
-            'Content-Length': body.length
+            ...encoder.headers
         }
     };
 
@@ -64,8 +63,11 @@ async function uploadArchive(file, accessToken, isPublic, metadata, archiveName)
             });
         });
         req.on('error', reject);
-        req.write(body);
-        req.end();
+        // encoder is an async iterable (stream)
+        const stream = encoder.encode();
+        stream.on('data', chunk => req.write(chunk));
+        stream.on('end', () => req.end());
+        stream.on('error', reject);
     });
 }
 
