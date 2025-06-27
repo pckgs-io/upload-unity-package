@@ -28574,11 +28574,16 @@ async function uploadArchive(file, accessToken, isPublic, metadata, archiveName)
             });
         });
         req.on('error', reject);
-        // encoder is an async iterable (stream)
-        const stream = encoder.encode();
-        stream.on('data', chunk => req.write(chunk));
-        stream.on('end', () => req.end());
-        stream.on('error', reject);
+        (async () => {
+            try {
+                for await (const chunk of encoder.encode()) {
+                    req.write(chunk);
+                }
+                req.end();
+            } catch (err) {
+                reject(err);
+            }
+        })();
     });
 }
 
