@@ -28135,7 +28135,7 @@ const exec = __nccwpck_require__(5236);
 const fs = __nccwpck_require__(9896);
 const path = __nccwpck_require__(6928);
 const https = __nccwpck_require__(5692);
-const { FormData } = __nccwpck_require__(4859);
+const { FormData, File } = __nccwpck_require__(4859);
 
 async function getPackageJson(folder) {
     // Try to read from the given folder first (relative to repo root)
@@ -28167,7 +28167,7 @@ async function uploadArchive(file, accessToken, isPublic, metadata, archiveName)
     const form = new FormData();
     form.set('isPublic', String(isPublic));
     form.set('metadata', JSON.stringify(metadata));
-    form.append('packageFile', file, archiveName, { type: 'application/gzip' });
+    form.append('packageFile', new File([file], archiveName, { type: 'application/gzip' }));
 
     const boundary = form.getBoundary();
     const body = Buffer.concat([...form]);

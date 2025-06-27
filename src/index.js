@@ -3,7 +3,7 @@ const exec = require('@actions/exec');
 const fs = require('fs');
 const path = require('path');
 const https = require('https');
-const { FormData } = require('formdata-node');
+const { FormData, File } = require('formdata-node');
 
 async function getPackageJson(folder) {
     // Try to read from the given folder first (relative to repo root)
@@ -35,7 +35,7 @@ async function uploadArchive(file, accessToken, isPublic, metadata, archiveName)
     const form = new FormData();
     form.set('isPublic', String(isPublic));
     form.set('metadata', JSON.stringify(metadata));
-    form.append('packageFile', file, archiveName, { type: 'application/gzip' });
+    form.append('packageFile', new File([file], archiveName, { type: 'application/gzip' }));
 
     const boundary = form.getBoundary();
     const body = Buffer.concat([...form]);
