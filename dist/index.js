@@ -28538,8 +28538,19 @@ async function getPackageJson(folder) {
     return json;
 }
 
-async function compressFolder(folder, archiveName) {
-    await exec.exec('tar', ['-czf', archiveName, folder]);
+async function compressFolder(folder, archiveName, packageDirName = 'package') {
+    // Try to resolve the folder like getPackageJson
+    let folderPath = path.join(folder);
+    if (!fs.existsSync(folderPath) || !fs.lstatSync(folderPath).isDirectory()) {
+        folderPath = path.join(process.cwd()); // fallback to repo root
+        if (!fs.existsSync(folderPath) || !fs.lstatSync(folderPath).isDirectory()) {
+            throw new Error(`Target folder '${folder}' not found.`);
+        }
+    }
+    // Use tar to archive the contents into a top-level 'package/' directory
+    // This will create a tar.gz with all files under 'package/'
+    // Example: tar -czf archiveName -C folderPath . --transform 's,^,package/,',
+    await exec.exec('tar', ['-czf', archiveName, '-C', folderPath, '.', '--transform', `s,^,${packageDirName}/,`]);
     return fs.readFileSync(path.join(process.cwd(), archiveName));
 }
 
