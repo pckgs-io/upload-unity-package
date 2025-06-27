@@ -28138,9 +28138,14 @@ const https = __nccwpck_require__(5692);
 const { FormData } = __nccwpck_require__(4859);
 
 async function getPackageJson(folder) {
-    const packageJsonPath = __nccwpck_require__.ab + "upload-package/" + folder + '/package.json';
+    // Try to read from the given folder first (relative to repo root)
+    let packageJsonPath = path.join(folder, 'package.json');
     if (!fs.existsSync(packageJsonPath)) {
-        throw new Error(`'package.json' not found in folder '${folder}'.`);
+        // Fallback: try to read from repo root
+        packageJsonPath = path.join('package.json');
+        if (!fs.existsSync(packageJsonPath)) {
+            throw new Error(`'package.json' not found in folder '${folder}' or repository root.`);
+        }
     }
     const content = fs.readFileSync(packageJsonPath, 'utf-8');
     const json = JSON.parse(content);
