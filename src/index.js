@@ -36,10 +36,9 @@ async function compressFolder(folder, archiveName, packageDirName = 'package') {
             throw new Error(`Target folder '${folder}' not found.`);
         }
     }
-    // Use tar to archive the contents into a top-level 'package/' directory
-    // This will create a tar.gz with all files under 'package/'
-    // Example: tar -czf archiveName -C folderPath . --transform 's,^,package/,',
-    await exec.exec('tar', ['-czf', archiveName, '-C', folderPath, '.', '--transform', `s,^,${packageDirName}/,`]);
+    // Use tar to archive the contents into a top-level 'package/' directory, removing './' from paths
+    // Example: tar -czf archiveName -C folderPath . --transform 's,^[.]/,package/,',
+    await exec.exec('tar', ['-czf', archiveName, '-C', folderPath, '.', '--transform', `s,^[.]/,${packageDirName}/,`]);
     return fs.readFileSync(path.join(process.cwd(), archiveName));
 }
 
