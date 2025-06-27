@@ -6,9 +6,14 @@ const https = require('https');
 const { FormData } = require('formdata-node');
 
 async function getPackageJson(folder) {
-    const packageJsonPath = path.join(process.cwd(), folder, 'package.json');
+    // Try to read from the given folder first (relative to repo root)
+    let packageJsonPath = path.join(folder, 'package.json');
     if (!fs.existsSync(packageJsonPath)) {
-        throw new Error(`'package.json' not found in folder '${folder}'.`);
+        // Fallback: try to read from repo root
+        packageJsonPath = path.join('package.json');
+        if (!fs.existsSync(packageJsonPath)) {
+            throw new Error(`'package.json' not found in folder '${folder}' or repository root.`);
+        }
     }
     const content = fs.readFileSync(packageJsonPath, 'utf-8');
     const json = JSON.parse(content);
