@@ -41,24 +41,25 @@ async function compressFolder(folder, archiveName) {
     const tmpDir = path.join(process.cwd(), `.tmp-${Date.now()}`);
     const packageDirName = 'package';
     const virtualRoot = path.join(tmpDir, packageDirName);
-    // Create temporary virtual root: .tmp-timestamp/package/
-    await fsp.mkdir(virtualRoot, { recursive: true });
+    try {
+        await fsp.mkdir(virtualRoot, { recursive: true });
 
-    // Copy all contents into the virtual root
-    const items = await fsp.readdir(folderPath);
-    await Promise.all(items.map(async item => {
-        const src = path.join(folderPath, item);
-        const dest = path.join(virtualRoot, item);
-        await fsp.cp(src, dest, { recursive: true });
-    }));
+        // Copy all contents into the virtual root
+        const items = await fsp.readdir(folderPath);
+        await Promise.all(items.map(async item => {
+            const src = path.join(folderPath, item);
+            const dest = path.join(virtualRoot, item);
+            await fsp.cp(src, dest, { recursive: true });
+        }));
 
-    // Compress the virtual root (which includes the top-level package/)
-    await compressing.tar.compressDir(path.join(tmpDir, packageDirName), archiveName);
+        const archiveDir = path.join(process.cwd(), archiveName);
+        // Compress the virtual root (which includes the top-level package/)
+        await compressing.tar.compressDir(path.join(tmpDir, packageDirName), archiveDir);
 
-    // Clean up
-    await fsp.rm(tmpDir, { recursive: true, force: true });
-
-    return fs.readFileSync(path.join(process.cwd(), archiveName));
+        return fs.readFileSync(archiveDir);
+    } finally {
+        await fsp.rm(tmpDir, { recursive: true, force: true });
+    }
 }
 
 async function uploadArchive(file, accessToken, isPublic, metadata, archiveName) {
