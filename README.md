@@ -1,4 +1,4 @@
-# Upload Unity Package to pckgs.io
+# pckgs.io Upload Package Action
 
 📦 A GitHub Action for uploading Unity packages to [pckgs.io](https://pckgs.io), a registry for private and public Unity packages.  
 Use this action in your workflows to publish Unity packages directly from your repository to [pckgs.io](https://pckgs.io) automatically.
