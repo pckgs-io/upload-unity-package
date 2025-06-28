@@ -1,10 +1,11 @@
 const core = require('@actions/core');
-const exec = require('@actions/exec');
 const fs = require('fs');
 const path = require('path');
 const https = require('https');
 const { FormData, File } = require('formdata-node');
 const { FormDataEncoder } = require('form-data-encoder');
+const fsp = require('fs/promises');
+const compressing = require('compressing');
 
 async function getPackageJson(folder) {
     // Try to read from the given folder first (relative to repo root)
