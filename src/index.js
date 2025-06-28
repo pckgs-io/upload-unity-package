@@ -52,9 +52,9 @@ async function compressFolder(folder, archiveName) {
             await fsp.cp(src, dest, { recursive: true });
         }));
 
-        const archiveDir = path.join(process.cwd(), archiveName);
+        const archiveDir = path.join(tmpDir, archiveName);
         // Compress the virtual root (which includes the top-level package/)
-        await compressing.tar.compressDir(path.join(tmpDir, packageDirName), archiveDir);
+        await compressing.tgz.compressDir(virtualRoot, archiveDir);
 
         return fs.readFileSync(archiveDir);
     } finally {
