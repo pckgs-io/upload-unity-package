@@ -28614,14 +28614,17 @@ async function run() {
             core.info(`Package version is set to ${metadata.version}`);
         }
         if (contributorEmail) {
+            metadata.author = metadata.author || {};
             metadata.author.email = contributorEmail;
             core.info(`Package author email is set to ${metadata.author.email}`);
         }
         if (contributorName) {
+            metadata.author = metadata.author || {};
             metadata.author.name = contributorName;
             core.info(`Package author name is set to ${metadata.author.name}`);
         }
         if (contributorUrl) {
+            metadata.author = metadata.author || {};
             metadata.author.url = contributorUrl;
             core.info(`Package author email is set to ${metadata.author.url}`);
         }
