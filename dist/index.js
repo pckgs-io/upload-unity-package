@@ -41729,8 +41729,8 @@ async function compressFolder(folder, archiveName) {
     }
 
     const tmpDir = path.join(process.cwd(), `.tmp-${Date.now()}`);
-    const virtualRoot = path.join(tmpDir, 'package');
-
+    const packageDirName = 'package';
+    const virtualRoot = path.join(tmpDir, packageDirName);
     // Create temporary virtual root: .tmp-timestamp/package/
     await fsp.mkdir(virtualRoot, { recursive: true });
 
