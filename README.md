@@ -5,9 +5,9 @@ Use this action in your workflows to publish Unity packages directly from your r
 
 ---
 
-## What is pckgs.io?
+# What is pckgs.io?
 
-[pckgs.io](https://pckgs.io) is a Unity package registry service that makes it easy to host, share, and version Unity packages — both publicly and privately — for individuals and teams.  
+<img src="https://pckgs.io/icon-dark.png" width="25" /> [pckgs.io](https://pckgs.io) is a Unity package registry service that makes it easy to host, share, and consume Unity packages — both publicly and privately — providing a simple and streamlined experience for individuals and teams.
 
 ---
 
@@ -16,7 +16,7 @@ Use this action in your workflows to publish Unity packages directly from your r
 Make sure your repository has a secret named **PCKGS_ACCESS_TOKEN** that contains your [pckgs.io](https://pckgs.io) access token for authentication.
 
 
-Check the [detailed guide](https://pckgs.io/docs/upload-a-package-with-github-actions) for full instructions on using this action to upload packages to your pckgs.io organization.
+Check the [detailed guide](https://pckgs.io/docs/upload-a-package-with-github-actions) for full instructions on using this action to upload packages to your [pckgs.io](https://pckgs.io) organization.
 
 ### Example Workflow
 
