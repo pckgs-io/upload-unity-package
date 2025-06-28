@@ -27,7 +27,7 @@ async function getPackageJson(folder) {
     return json;
 }
 
-async function compressFolder(folder, archiveName, packageDirName = 'package') {
+async function compressFolder(folder, archiveName) {
     // Try to resolve the folder like getPackageJson
     let folderPath = path.join(folder);
     if (!fs.existsSync(folderPath) || !fs.lstatSync(folderPath).isDirectory()) {
@@ -36,9 +36,27 @@ async function compressFolder(folder, archiveName, packageDirName = 'package') {
             throw new Error(`Target folder '${folder}' not found.`);
         }
     }
-    // Use tar to archive the contents into a top-level 'package/' directory, removing './' from paths
-    // Example: tar -czf archiveName -C folderPath . --transform 's,^[.]/,package/,',
-    await exec.exec('tar', ['-czf', archiveName, '-C', folderPath, '.', '--transform', `s,^[.]/,${packageDirName}/,`]);
+
+    const tmpDir = path.join(process.cwd(), `.tmp-${Date.now()}`);
+    const virtualRoot = path.join(tmpDir, 'package');
+
+    // Create temporary virtual root: .tmp-timestamp/package/
+    await fsp.mkdir(virtualRoot, { recursive: true });
+
+    // Copy all contents into the virtual root
+    const items = await fsp.readdir(folderPath);
+    await Promise.all(items.map(async item => {
+        const src = path.join(folderPath, item);
+        const dest = path.join(virtualRoot, item);
+        await fsp.cp(src, dest, { recursive: true });
+    }));
+
+    // Compress the virtual root (which includes the top-level package/)
+    await compressing.tar.compressDir(path.join(tmpDir, packageDirName), archiveName);
+
+    // Clean up
+    await fsp.rm(tmpDir, { recursive: true, force: true });
+
     return fs.readFileSync(path.join(process.cwd(), archiveName));
 }
 
