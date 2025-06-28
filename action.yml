@@ -1,18 +1,34 @@
 name: Upload Package
-description: Uploads unity package to pckgs.io
+description: Uploads a Unity package to pckgs.io
 
 inputs:
   package_folder:
-    description: 'Folder to compress'
+    description: 'Path to the Unity package folder to compress and upload.'
     required: true
-  access_token:
-    description: 'Access token for authorization'
-    required: true
-  is_public:
-    description: 'Set to true to make the package public'
-    required: false
-    default: 'false'
 
+  access_token:
+    description: 'Access token used to authenticate with pckgs.io.'
+    required: true
+
+  is_public:
+    description: 'Whether the package should be publicly available.'
+    required: true
+
+  version:
+    description: 'Version of the package (e.g., 1.0.0).'
+    required: false
+
+  contributor_email:
+    description: 'Email address of the contributor.'
+    required: false
+
+  contributor_name:
+    description: 'Name or nickname of the contributor.'
+    required: false
+
+  contributor_url:
+    description: 'URL to the contributor’s profile (e.g., GitHub, website).'
+    required: false
 runs:
   using: 'node16'
   main: 'dist/index.js'

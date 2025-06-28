@@ -92,10 +92,30 @@ async function run() {
         const folder = core.getInput('package_folder');
         const accessToken = core.getInput('access_token');
         const isPublic = core.getBooleanInput ? core.getBooleanInput('is_public') : core.getInput('is_public') === 'true';
+        const version = core.getInput('version');
+        const contributorEmail = core.getInput('contributor_email');
+        const contributorName = core.getInput('contributor_name');
+        const contributorUrl = core.getInput('contributor_url');
 
         metadata = await getPackageJson(folder);
-        const archiveName = `${metadata.name}@${metadata.version}.tar.gz`;
+        if (version) {
+            metadata.version = version;
+            core.info(`Package version is set to ${metadata.version}`);
+        }
+        if (contributorEmail) {
+            metadata.author.email = contributorEmail;
+            core.info(`Package author email is set to ${metadata.author.email}`);
+        }
+        if (contributorName) {
+            metadata.author.name = contributorName;
+            core.info(`Package author name is set to ${metadata.author.name}`);
+        }
+        if (contributorUrl) {
+            metadata.author.url = contributorUrl;
+            core.info(`Package author email is set to ${metadata.author.url}`);
+        }
 
+        const archiveName = `${metadata.name}@${metadata.version}.tar.gz`;
         const file = await compressFolder(folder, archiveName);
         await uploadArchive(file, accessToken, isPublic, metadata, archiveName);
 
