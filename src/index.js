@@ -121,10 +121,14 @@ async function uploadArchive(folder, file, accessToken, isPublic, metadata, arch
     startPublishForm.set("isPublic", String(isPublic));
 
     const startPublishFormEncoder = new FormDataEncoder(startPublishForm);
+    const startPublishChunks = [];
+    for await (const chunk of startPublishFormEncoder.encode) {
+        startPublishChunks.push(chunk);
+    }
     const uploadSession = await sendHttpRequest({
         url: 'https://registry.pckgs.io/packages/start-publish',
         method: 'POST',
-        body: Buffer.concat([...startPublishFormEncoder.encode()]),
+        body: Buffer.concat(startPublishChunks),
         accessToken,
         headers: startPublishFormEncoder.headers
     });
@@ -139,8 +143,6 @@ async function uploadArchive(folder, file, accessToken, isPublic, metadata, arch
         }
     });
 
-    //i need to send startPublish form as post request to registry.pckgs.io/packages/start-publish 
-
     const completePublishForm = new FormData();
     completePublishForm.set('sessionId', uploadSession.sessionId);
     if (readmeBytes)
@@ -151,10 +153,14 @@ async function uploadArchive(folder, file, accessToken, isPublic, metadata, arch
         completePublishForm.set('changelog', new File([changelogBytes], "CHANGELOG.md", { type: 'text/markdown' }));
 
     const completePublishFormEncoder = new FormDataEncoder(completePublishForm);
+    const completePublishChunks = [];
+    for await (const chunk of completePublishFormEncoder.encode) {
+        completePublishChunks.push(chunk);
+    }
     await sendHttpRequest({
         url: 'https://registry.pckgs.io/packages/complete-publish',
         method: 'POST',
-        body: Buffer.concat([...completePublishFormEncoder.encode()]),
+        body: Buffer.concat(completePublishChunks),
         accessToken,
         headers: completePublishFormEncoder.headers
     });
