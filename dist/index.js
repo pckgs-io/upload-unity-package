@@ -41714,7 +41714,8 @@ async function uploadArchive(folder, file, accessToken, isPublic, metadata, arch
     const licenseBytes = fs.existsSync(licensePath) ? fs.readFileSync(licensePath) : null;
     const changelogBytes = fs.existsSync(changelogPath) ? fs.readFileSync(changelogPath) : null;
 
-    const checksumSha256 = crypto.createHash('sha256').update(file).digest('hex');
+    const checksumSha256 = crypto.createHash('sha256').update(file).digest('base64');
+    core.info(`SHA256 checksum: ${checksumSha256}`);
 
     //Start Publish
     const startPublishForm = new FormData();
@@ -41735,6 +41736,8 @@ async function uploadArchive(folder, file, accessToken, isPublic, metadata, arch
         accessToken,
         headers: startPublishFormEncoder.headers
     });
+
+    core.info(`Upload session: ${uploadSession.sessionId}`);
 
     await sendHttpRequest({
         url: uploadSession.url,
@@ -41760,6 +41763,9 @@ async function uploadArchive(folder, file, accessToken, isPublic, metadata, arch
     for await (const chunk of completePublishFormEncoder.encode()) {
         completePublishChunks.push(chunk);
     }
+
+    core.info(`Completing upload`);
+
     await sendHttpRequest({
         url: 'https://registry.pckgs.io/packages/complete-publish',
         method: 'POST',
