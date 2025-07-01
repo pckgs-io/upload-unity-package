@@ -41725,7 +41725,7 @@ async function uploadArchive(folder, file, accessToken, isPublic, metadata, arch
 
     const startPublishFormEncoder = new FormDataEncoder(startPublishForm);
     const startPublishChunks = [];
-    for await (const chunk of startPublishFormEncoder.encode) {
+    for await (const chunk of startPublishFormEncoder.encode()) {
         startPublishChunks.push(chunk);
     }
     const uploadSession = await sendHttpRequest({
@@ -41757,7 +41757,7 @@ async function uploadArchive(folder, file, accessToken, isPublic, metadata, arch
 
     const completePublishFormEncoder = new FormDataEncoder(completePublishForm);
     const completePublishChunks = [];
-    for await (const chunk of completePublishFormEncoder.encode) {
+    for await (const chunk of completePublishFormEncoder.encode()) {
         completePublishChunks.push(chunk);
     }
     await sendHttpRequest({
