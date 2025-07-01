@@ -41696,6 +41696,7 @@ const { FormData, File } = __nccwpck_require__(4859);
 const { FormDataEncoder } = __nccwpck_require__(1283);
 const fsp = __nccwpck_require__(1943);
 const compressing = __nccwpck_require__(2696);
+const crypto = __nccwpck_require__(6982);
 
 async function getPackageJson(folder) {
     // Try to read from the given folder first (relative to repo root)
@@ -41750,49 +41751,102 @@ async function compressFolder(folder, archiveName) {
     } finally {
         await fsp.rm(tmpDir, { recursive: true, force: true });
     }
-}
+} async function sendHttpRequest({ url, method = 'POST', body, headers = {}, accessToken }) {
+    const https = __nccwpck_require__(5692);
+    const { URL } = __nccwpck_require__(7016);
+    const parsedUrl = new URL(url);
 
-async function uploadArchive(file, accessToken, isPublic, metadata, archiveName) {
-    const form = new FormData();
-    form.set('isPublic', String(isPublic));
-    form.set('metadata', JSON.stringify(metadata));
-    form.append('packageFile', new File([file], archiveName, { type: 'application/gzip' }));
-
-    const encoder = new FormDataEncoder(form);
-
-    const options = {
-        method: 'POST',
-        hostname: 'registry.pckgs.io',
-        path: '/packages',
-        headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            ...encoder.headers
-        }
-    };
-
-    await new Promise((resolve, reject) => {
-        const req = https.request(options, (res) => {
+    return new Promise((resolve, reject) => {
+        const req = https.request({
+            method,
+            hostname: parsedUrl.hostname,
+            path: parsedUrl.pathname + parsedUrl.search,
+            headers: {
+                ...(accessToken ? { 'Authorization': `Bearer ${accessToken}` } : {}),
+                ...headers
+            }
+        }, (res) => {
             let data = '';
             res.on('data', chunk => data += chunk);
             res.on('end', () => {
                 if (res.statusCode >= 200 && res.statusCode < 300) {
-                    resolve();
+                    try {
+                        resolve(JSON.parse(data));
+                    } catch {
+                        resolve(data);
+                    }
                 } else {
-                    reject(new Error(`Upload failed: ${res.statusCode} ${data}`));
+                    reject(new Error(`Request failed: ${res.statusCode} ${data}`));
                 }
             });
         });
         req.on('error', reject);
-        (async () => {
-            try {
-                for await (const chunk of encoder.encode()) {
-                    req.write(chunk);
-                }
-                req.end();
-            } catch (err) {
-                reject(err);
-            }
-        })();
+
+        if (body) {
+            req.write(body);
+        }
+        req.end();
+    });
+}
+async function uploadArchive(folder, file, accessToken, isPublic, metadata, archiveName) {
+
+    if (file.length > 512 * 1024 * 1024)
+        throw new Error("The uploaded package exceeds the maximum allowed size of 512 MB.");
+
+    const readmePath = path.join(folder, 'README.md');
+    const licensePath = path.join(folder, 'LICENSE.md');
+    const changelogPath = path.join(folder, 'CHANGELOG.md');
+
+    const readmeBytes = fs.existsSync(readmePath) ? fs.readFileSync(readmePath) : null;
+    const licenseBytes = fs.existsSync(licensePath) ? fs.readFileSync(licensePath) : null;
+    const changelogBytes = fs.existsSync(changelogPath) ? fs.readFileSync(changelogPath) : null;
+
+    const checksumSha256 = crypto.createHash('sha256').update(file).digest('hex');
+
+    //Start Publish
+    const startPublishForm = new FormData();
+    startPublishForm.set("checksumSha256", checksumSha256);
+    startPublishForm.set("packageSize", file.length);
+    startPublishForm.set("metadata", JSON.stringify(metadata));
+    startPublishForm.set("isPublic", String(isPublic));
+
+    const startPublishFormEncoder = new FormDataEncoder(startPublishForm);
+    const uploadSession = await sendHttpRequest({
+        url: 'https://registry.pckgs.io/packages/start-publish',
+        method: 'POST',
+        body: Buffer.concat([...startPublishFormEncoder.encode()]),
+        accessToken,
+        headers: startPublishFormEncoder.headers
+    });
+
+    await sendHttpRequest({
+        url: uploadSession.url,
+        method: 'PUT',
+        body: file,
+        headers: {
+            'Content-Type': 'application/gzip',
+            'Content-Length': file.length
+        }
+    });
+
+    //i need to send startPublish form as post request to registry.pckgs.io/packages/start-publish 
+
+    const completePublishForm = new FormData();
+    completePublishForm.set('sessionId', uploadSession.sessionId);
+    if (readmeBytes)
+        completePublishForm.set('readme', new File([readmeBytes], "README.md", { type: 'text/markdown' }));
+    if (licenseBytes)
+        completePublishForm.set('license', new File([licenseBytes], "LICENSE.md", { type: 'text/markdown' }));
+    if (changelogBytes)
+        completePublishForm.set('changelog', new File([changelogBytes], "CHANGELOG.md", { type: 'text/markdown' }));
+
+    const completePublishFormEncoder = new FormDataEncoder(completePublishForm);
+    await sendHttpRequest({
+        url: 'https://registry.pckgs.io/packages/complete-publish',
+        method: 'POST',
+        body: Buffer.concat([...completePublishFormEncoder.encode()]),
+        accessToken,
+        headers: completePublishFormEncoder.headers
     });
 }
 
@@ -41830,7 +41884,7 @@ async function run() {
 
         const archiveName = `${metadata.name}@${metadata.version}.tar.gz`;
         const file = await compressFolder(folder, archiveName);
-        await uploadArchive(file, accessToken, isPublic, metadata, archiveName);
+        await uploadArchive(folder, file, accessToken, isPublic, metadata, archiveName);
 
         core.info(`Upload successful! isPublic: ${isPublic}`);
     } catch (error) {
