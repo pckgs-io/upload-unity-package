@@ -81,7 +81,6 @@ async function compressFolder(folder, archiveName) {
             res.on('end', () => {
                 if (res.statusCode >= 200 && res.statusCode < 300) {
                     try {
-                        core.info("data: " + data);
                         resolve(JSON.parse(data));
                     } catch (e) {
                         resolve(data);
@@ -135,7 +134,7 @@ async function uploadArchive(folder, file, accessToken, isPublic, metadata, arch
         headers: startPublishFormEncoder.headers
     });
 
-    core.info(`Upload session: ${uploadSession}`);
+    core.info(`Upload session: ${uploadSession.id}`);
 
     await sendHttpRequest({
         url: uploadSession.url,
@@ -148,7 +147,7 @@ async function uploadArchive(folder, file, accessToken, isPublic, metadata, arch
     });
 
     const completePublishForm = new FormData();
-    completePublishForm.set('sessionId', uploadSession.sessionId);
+    completePublishForm.set('sessionId', uploadSession.id);
     if (readmeBytes)
         completePublishForm.set('readme', new File([readmeBytes], "README.md", { type: 'text/markdown' }));
     if (licenseBytes)
