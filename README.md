@@ -36,7 +36,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Upload package to pckgs.io
-        uses: pckgs-io/upload-package@v1
+        uses: pckgs-io/upload-unity-package@v1
         with:
           package_folder: Assets/Package
           access_token: ${{ secrets.PCKGS_ACCESS_TOKEN }}
