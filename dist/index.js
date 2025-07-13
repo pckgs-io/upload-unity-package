@@ -41604,12 +41604,13 @@ var __webpack_exports__ = {};
 const core = __nccwpck_require__(7484);
 const fs = __nccwpck_require__(9896);
 const path = __nccwpck_require__(6928);
-const https = __nccwpck_require__(5692);
 const { FormData, File } = __nccwpck_require__(4859);
 const { FormDataEncoder } = __nccwpck_require__(7954);
 const fsp = __nccwpck_require__(1943);
 const compressing = __nccwpck_require__(2696);
 const crypto = __nccwpck_require__(6982);
+const https = __nccwpck_require__(5692);
+const { URL: src_URL } = __nccwpck_require__(7016);
 
 async function getPackageJson(folder) {
     // Try to read from the given folder first (relative to repo root)
@@ -41665,9 +41666,8 @@ async function compressFolder(folder, archiveName) {
         await fsp.rm(tmpDir, { recursive: true, force: true });
     }
 } async function sendHttpRequest({ url, method = 'POST', body, headers = {}, accessToken }) {
-    const https = __nccwpck_require__(5692);
-    const { URL } = __nccwpck_require__(7016);
-    const parsedUrl = new URL(url);
+
+    const parsedUrl = new src_URL(url);
 
     return new Promise((resolve, reject) => {
         const req = https.request({
@@ -41701,18 +41701,37 @@ async function compressFolder(folder, archiveName) {
         req.end();
     });
 }
-async function uploadArchive(folder, file, accessToken, isPublic, metadata, archiveName) {
+function getFile(folder, fileName) {
+    let fileNames = [
+        fileName,
+        `${fileName}.md`,
+        `${fileName}.txt`
+    ];
+
+    for (const currentFileName of fileNames) {
+        const fullPath = path.join(folder, currentFileName);
+        if (fs.existsSync(fullPath)) {
+            return fs.readFileSync(fullPath);
+        }
+    }
+    return null;
+}
+
+async function uploadArchive(folder, accessToken, isPublic, metadata, archiveName, isMetadataUpdated) {
+
+    if (isMetadataUpdated) {
+        const metadataPath = path.join(folder, "package.json");
+        fs.writeFileSync(metadataPath, JSON.stringify(metadata, null, 2), "utf-8");
+    }
+
+    const file = await compressFolder(folder, archiveName);
 
     if (file.length > 512 * 1024 * 1024)
         throw new Error("The uploaded package exceeds the maximum allowed size of 512 MB.");
 
-    const readmePath = path.join(folder, 'README.md');
-    const licensePath = path.join(folder, 'LICENSE.md');
-    const changelogPath = path.join(folder, 'CHANGELOG.md');
-
-    const readmeBytes = fs.existsSync(readmePath) ? fs.readFileSync(readmePath) : null;
-    const licenseBytes = fs.existsSync(licensePath) ? fs.readFileSync(licensePath) : null;
-    const changelogBytes = fs.existsSync(changelogPath) ? fs.readFileSync(changelogPath) : null;
+    const readmeBytes = getFile(folder, 'README');
+    const licenseBytes = getFile(folder, 'LICENSE');
+    const changelogBytes = getFile(folder, 'CHANGELOG');
 
     const checksumSha256 = crypto.createHash('sha256').update(file).digest('base64');
     core.info(`SHA256 checksum: ${checksumSha256}`);
@@ -41764,8 +41783,6 @@ async function uploadArchive(folder, file, accessToken, isPublic, metadata, arch
         completePublishChunks.push(chunk);
     }
 
-    core.info(`Completing upload`);
-
     await sendHttpRequest({
         url: 'https://registry.pckgs.io/packages/complete-publish',
         method: 'POST',
@@ -41787,29 +41804,33 @@ async function run() {
         const contributorUrl = core.getInput('contributor_url');
 
         metadata = await getPackageJson(folder);
+        let isMetadataUpdated = false;
         if (version) {
+            isMetadataUpdated = true;
             metadata.version = version;
             core.info(`Package version is set to ${metadata.version}`);
         }
         if (contributorEmail) {
+            isMetadataUpdated = true;
             metadata.author = metadata.author || {};
             metadata.author.email = contributorEmail;
             core.info(`Package author email is set to ${metadata.author.email}`);
         }
         if (contributorName) {
+            isMetadataUpdated = true;
             metadata.author = metadata.author || {};
             metadata.author.name = contributorName;
             core.info(`Package author name is set to ${metadata.author.name}`);
         }
         if (contributorUrl) {
+            isMetadataUpdated = true;
             metadata.author = metadata.author || {};
             metadata.author.url = contributorUrl;
             core.info(`Package author email is set to ${metadata.author.url}`);
         }
 
         const archiveName = `${metadata.name}@${metadata.version}.tar.gz`;
-        const file = await compressFolder(folder, archiveName);
-        await uploadArchive(folder, file, accessToken, isPublic, metadata, archiveName);
+        await uploadArchive(folder, accessToken, isPublic, metadata, archiveName, isMetadataUpdated);
 
         core.info(`Upload successful! isPublic: ${isPublic}`);
     } catch (error) {
