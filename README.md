@@ -7,7 +7,7 @@ Use this action in your workflows to publish Unity packages directly from your r
 
 # What is pckgs.io?
 
-<img src="https://pckgs.io/icon-dark.png" width="25" /> [pckgs.io](https://pckgs.io) is a Unity package registry service that makes it easy to host, share, and consume Unity packages — both publicly and privately — providing a simple and streamlined experience for individuals and teams.
+<img align="center" src="https://pckgs.io/icon-dark.png" width="25" /> [pckgs.io](https://pckgs.io) is a Unity package registry service that makes it easy to host, share, and consume Unity packages — both publicly and privately — providing a simple and streamlined experience for individuals and teams.
 
 ---
 
