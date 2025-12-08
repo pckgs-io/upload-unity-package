@@ -158,7 +158,7 @@ async function uploadArchive(
   const licenseBytes = getFile(folder, "LICENSE");
   const changelogBytes = getFile(folder, "CHANGELOG");
 
-  const checksumSha1 = crypto.createHash("sha1").update(file).digest("base64");
+  const checksumSha = crypto.createHash("sha1").update(file).digest("base64");
   const checksumSha256 = crypto
     .createHash("sha256")
     .update(file)
@@ -168,7 +168,7 @@ async function uploadArchive(
     .update(file)
     .digest("base64");
 
-  core.info(`SHA1 checksum: ${checksumSha1}`);
+  core.info(`SHA1 checksum: ${checksumSha}`);
   core.info(`SHA256 checksum: ${checksumSha256}`);
   core.info(`SHA512 checksum: ${checksumSha512}`);
 
