@@ -41863,25 +41863,23 @@ async function uploadArchive(
   core.info(`SHA512 checksum: ${checksumSha512}`);
 
   //Start Publish
-  const startPublishForm = new FormData();
-  startPublishForm.set("checksumSha", checksumSha1);
-  startPublishForm.set("checksumSha256", checksumSha256);
-  startPublishForm.set("checksumSha512", checksumSha512);
-  startPublishForm.set("packageSize", file.length);
-  startPublishForm.set("metadata", JSON.stringify(metadata));
-  startPublishForm.set("isPublic", String(isPublic));
+  const startPublishData = {
+    checksumSha,
+    checksumSha256,
+    checksumSha512,
+    packageSize: file.length,
+    metadata,
+    isPublic,
+  };
 
-  const startPublishFormEncoder = new FormDataEncoder(startPublishForm);
-  const startPublishChunks = [];
-  for await (const chunk of startPublishFormEncoder.encode()) {
-    startPublishChunks.push(chunk);
-  }
   const uploadSession = await sendHttpRequest({
     url: `https://registry.pckgs.io/organizations/${organizationSlug}/artifacts/start-publish`,
     method: "POST",
-    body: Buffer.concat(startPublishChunks),
+    body: JSON.stringify(startPublishData),
     accessToken,
-    headers: startPublishFormEncoder.headers,
+    headers: {
+      "Content-Type": "application/json",
+    },
   });
 
   core.info(`Upload session: ${uploadSession.id}`);
