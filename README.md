@@ -15,7 +15,6 @@ Use this action in your workflows to publish Unity packages directly from your r
 
 Make sure your repository has a secret named **PCKGS_ACCESS_TOKEN** that contains your [pckgs.io](https://pckgs.io) access token for authentication.
 
-
 Check the [detailed guide](https://pckgs.io/docs/upload-a-package-with-github-actions) for full instructions on using this action to upload packages to your [pckgs.io](https://pckgs.io) organization.
 
 ### Example Workflow
@@ -38,6 +37,7 @@ jobs:
       - name: Upload package to pckgs.io
         uses: pckgs-io/upload-unity-package@v1
         with:
+          organization: myorgname
           package_folder: Assets/Package
           access_token: ${{ secrets.PCKGS_ACCESS_TOKEN }}
           is_public: true
@@ -49,12 +49,13 @@ jobs:
 
 ## Parameters
 
-| Parameter          | Required | Description                                                                                     |
-|--------------------|----------|-------------------------------------------------------------------------------------------------|
-| **package_folder**   | Yes      | Relative path to the Unity package folder within your repository that will be compressed and uploaded.                                        |
-| **access_token**     | Yes      | Access token used to authenticate with pckgs.io.                                               |
-| **is_public**        | Yes      | Boolean (**true** or **false**) specifying if the package should be publicly accessible. This setting applies only when the package is created for the first time.       |
-| **version**          | No       | Version of the package (e.g., **1.0.0**). If omitted, the package version must be defined in the package manifest. |
-| **contributor_email**| No       | Email address of the contributor uploading the package.                                        |
-| **contributor_name** | No       | Name or nickname of the contributor.                                                           |
-| **contributor_url**  | No       | URL to the contributor’s profile (e.g., GitHub, personal website).                             |
+| Parameter             | Required | Description                                                                                                                                                        |
+| --------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **package_folder**    | Yes      | Relative path to the Unity package folder within your repository that will be compressed and uploaded.                                                             |
+| **access_token**      | Yes      | Access token used to authenticate with pckgs.io.                                                                                                                   |
+| **is_public**         | Yes      | Boolean (**true** or **false**) specifying if the package should be publicly accessible. This setting applies only when the package is created for the first time. |
+| **version**           | No       | Version of the package (e.g., **1.0.0**). If omitted, the package version must be defined in the package manifest.                                                 |
+| **contributor_email** | No       | Email address of the contributor uploading the package.                                                                                                            |
+| **contributor_name**  | No       | Name or nickname of the contributor.                                                                                                                               |
+| **contributor_url**   | No       | URL to the contributor’s profile (e.g., GitHub, personal website).                                                                                                 |
+| **organization**      | No       | Organization name on pckgs.io. If omitted, automatically extracted from the second segment of the package name (e.g., `com.myorg.package` → `myorg`).              |

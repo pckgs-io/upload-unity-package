@@ -27,7 +27,11 @@ inputs:
     required: false
 
   contributor_url:
-    description: 'URL to the contributor’s profile (e.g., GitHub, website).'
+    description: ‘URL to the contributor’s profile (e.g., GitHub, website).’
+    required: false
+
+  organization:
+    description: ‘Organization slug on pckgs.io. If omitted, extracted from the second segment of the package name (e.g., "com.myorg.package" → "myorg").’
     required: false
 runs:
   using: 'node16'
