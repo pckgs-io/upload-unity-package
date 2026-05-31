@@ -31284,7 +31284,7 @@ async function uploadArchive(
 
 async function run() {
   try {
-    const folder = core.getInput("package_folder");
+    const folder = core.getInput("package_folder") || process.env.GITHUB_WORKSPACE || process.cwd();
     const accessToken = core.getInput("access_token");
     const isPublic = core.getBooleanInput
       ? core.getBooleanInput("is_public")

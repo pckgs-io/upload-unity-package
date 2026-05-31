@@ -3,8 +3,8 @@ description: Uploads a Unity package to pckgs.io
 
 inputs:
   package_folder:
-    description: 'Path to the Unity package folder to compress and upload.'
-    required: true
+    description: 'Path to the Unity package folder to compress and upload. Defaults to the repository root if omitted.'
+    required: false
 
   access_token:
     description: 'Access token used to authenticate with pckgs.io.'

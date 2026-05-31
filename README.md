@@ -38,7 +38,7 @@ jobs:
         uses: pckgs-io/upload-unity-package@v1
         with:
           organization: myorgname
-          package_folder: Assets/Package
+          package_folder: Assets/Package # optional, omit to use the repository root
           access_token: ${{ secrets.PCKGS_ACCESS_TOKEN }}
           is_public: true
           version: "1.0.${{ github.run_number }}"
@@ -51,7 +51,7 @@ jobs:
 
 | Parameter             | Required | Description                                                                                                                                                        |
 | --------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **package_folder**    | Yes      | Relative path to the Unity package folder within your repository that will be compressed and uploaded.                                                             |
+| **package_folder**    | No       | Relative path to the Unity package folder within your repository. If omitted, defaults to the repository root.                                                     |
 | **access_token**      | Yes      | Access token used to authenticate with pckgs.io.                                                                                                                   |
 | **is_public**         | Yes      | Boolean (**true** or **false**) specifying if the package should be publicly accessible. This setting applies only when the package is created for the first time. |
 | **version**           | No       | Version of the package (e.g., **1.0.0**). If omitted, the package version must be defined in the package manifest.                                                 |
