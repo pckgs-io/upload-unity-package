@@ -3,14 +3,9 @@ const fs = require("fs");
 const path = require("path");
 
 function getPackageJson(folder) {
-  let packageJsonPath = path.join(folder, "package.json");
+  const packageJsonPath = path.join(folder, "package.json");
   if (!fs.existsSync(packageJsonPath)) {
-    packageJsonPath = path.join("package.json");
-    if (!fs.existsSync(packageJsonPath)) {
-      throw new Error(
-        `'package.json' not found in folder '${folder}' or repository root.`,
-      );
-    }
+    throw new Error(`'package.json' not found in '${folder}'.`);
   }
   const content = fs.readFileSync(packageJsonPath, "utf-8");
   const json = JSON.parse(content);

@@ -4,12 +4,9 @@ const packlist = require("npm-packlist");
 const tar = require("tar");
 
 async function packFolder(folderPath) {
-  let resolvedPath = path.resolve(folderPath);
-  if (
-    !fs.existsSync(resolvedPath) ||
-    !fs.lstatSync(resolvedPath).isDirectory()
-  ) {
-    resolvedPath = process.cwd();
+  const resolvedPath = path.resolve(folderPath);
+  if (!fs.existsSync(resolvedPath) || !fs.lstatSync(resolvedPath).isDirectory()) {
+    throw new Error(`package_folder '${folderPath}' not found or is not a directory.`);
   }
   const files = await packlist({ path: resolvedPath });
   const chunks = [];
