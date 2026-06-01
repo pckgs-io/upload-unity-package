@@ -31232,6 +31232,16 @@ function wrappy (fn, cb) {
 
 /***/ }),
 
+/***/ 9992:
+/***/ ((module) => {
+
+const MAX_PACKAGE_SIZE = 512 * 1000 * 1000;
+
+module.exports = { MAX_PACKAGE_SIZE };
+
+
+/***/ }),
+
 /***/ 5105:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
@@ -31239,6 +31249,7 @@ const core = __nccwpck_require__(7484);
 const fs = __nccwpck_require__(9896);
 const path = __nccwpck_require__(6928);
 const { getPackageJson, applyOverrides } = __nccwpck_require__(1756);
+const { MAX_PACKAGE_SIZE } = __nccwpck_require__(9992);
 const { packFolder } = __nccwpck_require__(5711);
 const {
   startPublish,
@@ -31261,12 +31272,12 @@ async function uploadArchive(
     );
   }
 
-  const organizationSlug = core.getInput("organization") || metadata.name.split(".")[1];
+  const organizationSlug = resolveOrganization(core.getInput("organization"), metadata.name);
   core.info(`Organization: ${organizationSlug}`);
 
   const file = await packFolder(folder);
 
-  if (file.length > 512 * 1000 * 1000)
+  if (file.length > MAX_PACKAGE_SIZE)
     throw new Error(
       "The uploaded package exceeds the maximum allowed size of 512 MB.",
     );
@@ -31282,9 +31293,27 @@ async function uploadArchive(
   await completePublish({ sessionId: uploadSession.id }, accessToken);
 }
 
+function resolveOrganization(input, packageName) {
+  const slug = input || packageName.split(".")[1];
+  if (!slug) {
+    throw new Error(
+      "Organization could not be determined. Provide the 'organization' input or ensure the package name follows 'com.<org>.<name>' format.",
+    );
+  }
+  return slug;
+}
+
+function resolveFolder(input) {
+  let folder = input || process.env.GITHUB_WORKSPACE || process.cwd();
+  if (fs.existsSync(folder) && fs.lstatSync(folder).isFile() && path.basename(folder) === "package.json") {
+    folder = path.dirname(folder);
+  }
+  return folder;
+}
+
 async function run() {
   try {
-    const folder = core.getInput("package_folder") || process.env.GITHUB_WORKSPACE || process.cwd();
+    const folder = resolveFolder(core.getInput("package_folder"));
     const accessToken = core.getInput("access_token");
     const isPublic = core.getBooleanInput
       ? core.getBooleanInput("is_public")
@@ -31311,7 +31340,7 @@ async function run() {
   }
 }
 
-module.exports = { run };
+module.exports = { run, uploadArchive, resolveFolder, resolveOrganization };
 
 if (require.main === require.cache[eval('__filename')]) {
   run();
@@ -31328,14 +31357,9 @@ const fs = __nccwpck_require__(9896);
 const path = __nccwpck_require__(6928);
 
 function getPackageJson(folder) {
-  let packageJsonPath = path.join(folder, "package.json");
+  const packageJsonPath = path.join(folder, "package.json");
   if (!fs.existsSync(packageJsonPath)) {
-    packageJsonPath = path.join("package.json");
-    if (!fs.existsSync(packageJsonPath)) {
-      throw new Error(
-        `'package.json' not found in folder '${folder}' or repository root.`,
-      );
-    }
+    throw new Error(`'package.json' not found in '${folder}'.`);
   }
   const content = fs.readFileSync(packageJsonPath, "utf-8");
   const json = JSON.parse(content);
@@ -31399,12 +31423,9 @@ const packlist = __nccwpck_require__(6549);
 const tar = __nccwpck_require__(5942);
 
 async function packFolder(folderPath) {
-  let resolvedPath = path.resolve(folderPath);
-  if (
-    !fs.existsSync(resolvedPath) ||
-    !fs.lstatSync(resolvedPath).isDirectory()
-  ) {
-    resolvedPath = process.cwd();
+  const resolvedPath = path.resolve(folderPath);
+  if (!fs.existsSync(resolvedPath) || !fs.lstatSync(resolvedPath).isDirectory()) {
+    throw new Error(`package_folder '${folderPath}' not found or is not a directory.`);
   }
   const files = await packlist({ path: resolvedPath });
   const chunks = [];
