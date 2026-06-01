@@ -4,7 +4,8 @@
     "main": "index.js",
     "scripts": {
         "build": "ncc build src/index.js -o dist",
-        "test": "jest"
+        "test": "jest",
+        "prepare": "git config core.hooksPath .githooks"
     },
     "jest": {
         "testMatch": [
